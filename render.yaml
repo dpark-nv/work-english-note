@@ -2,19 +2,15 @@ services:
   - type: web
     name: work-english-note
     env: docker
-    plan: starter
+    plan: free
     healthCheckPath: /api/health
-    disk:
-      name: work-english-note-data
-      mountPath: /app/data
-      sizeGB: 1
     envVars:
       - key: HOST
         value: 0.0.0.0
       - key: PORT
         value: 4177
-      - key: DATA_DIR
-        value: /app/data
+      - key: DATABASE_URL
+        sync: false
       - key: OPENAI_MODEL
         value: gpt-5.4-mini
       - key: OPENAI_API_KEY

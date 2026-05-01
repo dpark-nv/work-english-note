@@ -219,7 +219,8 @@ async function loadStatus() {
   el.aiState.innerHTML = `<span class="state-dot"></span>${
     state.status.aiReady ? `AI 분석 켜짐 · ${escapeHtml(state.status.model)}` : "기본 분석 모드"
   }`;
-  el.storageText.textContent = "로컬 파일 저장 중";
+  el.storageText.textContent =
+    state.status.storage === "postgres" ? "클라우드 동기화 저장 중" : "로컬 파일 저장 중";
 }
 
 async function loadEntries() {

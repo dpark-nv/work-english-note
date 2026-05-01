@@ -18,6 +18,10 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
 const APP_PASSWORD = process.env.APP_PASSWORD || "";
 const APP_SECRET = process.env.APP_SECRET || APP_PASSWORD || "work-english-note-local";
 const AUTH_COOKIE = "work_english_auth";
+const DATABASE_URL = process.env.DATABASE_URL || "";
+const USE_DATABASE = Boolean(DATABASE_URL);
+const DATABASE_SSL = process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false };
+const DATABASE_POOL_MAX = Number(process.env.DATABASE_POOL_MAX || 3);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -30,6 +34,8 @@ const mimeTypes = {
 };
 
 let storeQueue = Promise.resolve();
+let databasePoolPromise = null;
+let databaseInitPromise = null;
 
 function hash(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -213,24 +219,111 @@ const analysisSchema = {
   ]
 };
 
-async function ensureStore() {
+function emptyStore() {
+  return { entries: [] };
+}
+
+function normalizeStore(store) {
+  return {
+    ...(store && typeof store === "object" ? store : {}),
+    entries: Array.isArray(store?.entries) ? store.entries : []
+  };
+}
+
+async function getDatabasePool() {
+  if (!USE_DATABASE) return null;
+  if (!databasePoolPromise) {
+    databasePoolPromise = import("pg").then(({ default: pg }) => {
+      const { Pool } = pg;
+      return new Pool({
+        connectionString: DATABASE_URL,
+        ssl: DATABASE_SSL,
+        max: Number.isFinite(DATABASE_POOL_MAX) && DATABASE_POOL_MAX > 0 ? DATABASE_POOL_MAX : 3,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000
+      });
+    });
+  }
+  return databasePoolPromise;
+}
+
+async function ensureDatabaseStore() {
+  if (!USE_DATABASE) return;
+  if (!databaseInitPromise) {
+    databaseInitPromise = (async () => {
+      const pool = await getDatabasePool();
+      await pool.query(`
+        create table if not exists work_english_note_store (
+          id integer primary key,
+          store jsonb not null,
+          updated_at timestamptz not null default now()
+        )
+      `);
+      await pool.query(
+        `
+          insert into work_english_note_store (id, store)
+          values (1, $1::jsonb)
+          on conflict (id) do nothing
+        `,
+        [JSON.stringify(emptyStore())]
+      );
+    })().catch((error) => {
+      databaseInitPromise = null;
+      throw error;
+    });
+  }
+  await databaseInitPromise;
+}
+
+async function readDatabaseStore() {
+  await ensureDatabaseStore();
+  const pool = await getDatabasePool();
+  const { rows } = await pool.query("select store from work_english_note_store where id = 1");
+  return normalizeStore(rows[0]?.store);
+}
+
+async function updateDatabaseStore(mutator) {
+  await ensureDatabaseStore();
+  const pool = await getDatabasePool();
+  const client = await pool.connect();
+
+  try {
+    await client.query("begin");
+    const { rows } = await client.query("select store from work_english_note_store where id = 1 for update");
+    const store = normalizeStore(rows[0]?.store);
+    const result = await mutator(store);
+    await client.query(
+      "update work_english_note_store set store = $1::jsonb, updated_at = now() where id = 1",
+      [JSON.stringify(store)]
+    );
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function ensureFileStore() {
   await mkdir(DATA_DIR, { recursive: true });
   await mkdir(BACKUP_DIR, { recursive: true });
   try {
     await stat(DATA_FILE);
   } catch {
-    await writeAtomic(DATA_FILE, JSON.stringify({ entries: [] }, null, 2));
+    await writeAtomic(DATA_FILE, JSON.stringify(emptyStore(), null, 2));
   }
 }
 
-async function readStore() {
-  await ensureStore();
+async function readFileStore() {
+  await ensureFileStore();
   const raw = await readFile(DATA_FILE, "utf8");
   try {
     const parsed = JSON.parse(raw);
-    return { entries: Array.isArray(parsed.entries) ? parsed.entries : [] };
+    return normalizeStore(parsed);
   } catch {
-    return { entries: [] };
+    return emptyStore();
   }
 }
 
@@ -263,20 +356,36 @@ async function backupCurrentStore() {
 }
 
 async function writeStoreDirect(store) {
-  await ensureStore();
+  await ensureFileStore();
   await backupCurrentStore();
   await writeAtomic(DATA_FILE, JSON.stringify(store, null, 2));
 }
 
-async function updateStore(mutator) {
+async function updateFileStore(mutator) {
   const operation = storeQueue.then(async () => {
-    const store = await readStore();
+    const store = await readFileStore();
     const result = await mutator(store);
     await writeStoreDirect(store);
     return result;
   });
   storeQueue = operation.catch(() => {});
   return operation;
+}
+
+async function ensureActiveStore() {
+  if (USE_DATABASE) {
+    await ensureDatabaseStore();
+    return;
+  }
+  await ensureFileStore();
+}
+
+async function readStore() {
+  return USE_DATABASE ? readDatabaseStore() : readFileStore();
+}
+
+async function updateStore(mutator) {
+  return USE_DATABASE ? updateDatabaseStore(mutator) : updateFileStore(mutator);
 }
 
 function sendJson(res, statusCode, payload) {
@@ -620,8 +729,9 @@ async function handleApi(req, res, pathname) {
       ok: true,
       aiReady: Boolean(process.env.OPENAI_API_KEY),
       model: OPENAI_MODEL,
-      dataFile: DATA_FILE,
-      backupDir: BACKUP_DIR
+      storage: USE_DATABASE ? "postgres" : "file",
+      dataFile: USE_DATABASE ? null : DATA_FILE,
+      backupDir: USE_DATABASE ? null : BACKUP_DIR
     });
   }
 
@@ -794,12 +904,12 @@ function getLanUrls(port) {
     .sort();
 }
 
-await ensureStore();
+await ensureActiveStore();
 server.listen(PORT, HOST, () => {
   console.log(`Work English Note is running at http://localhost:${PORT}`);
   for (const url of getLanUrls(PORT)) {
     console.log(`LAN URL: ${url}`);
   }
-  console.log(`Data file: ${DATA_FILE}`);
+  console.log(`Storage: ${USE_DATABASE ? "Postgres (DATABASE_URL)" : `file (${DATA_FILE})`}`);
   console.log(`AI analysis: ${process.env.OPENAI_API_KEY ? `on (${OPENAI_MODEL})` : "off (fallback mode)"}`);
 });
