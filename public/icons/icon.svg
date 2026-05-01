@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Work English Note">
+  <rect width="512" height="512" rx="112" fill="rgb(118,185,0)" />
+  <path
+    d="M144 148c0-22.1 17.9-40 40-40h184v248c0 26.5-21.5 48-48 48H184c-22.1 0-40-17.9-40-40V148Z"
+    fill="#fff"
+    opacity=".94"
+  />
+  <path d="M184 108h144c22.1 0 40 17.9 40 40v18H184c-22.1 0-40-17.9-40-40v-18h40Z" fill="#eef6df" />
+  <path d="M194 214h124M194 264h96M194 314h124" stroke="#4f8300" stroke-width="24" stroke-linecap="round" />
+  <path d="M140 148h42v256h-42c-22.1 0-40-17.9-40-40V188c0-22.1 17.9-40 40-40Z" fill="#416d00" />
+  <text
+    x="256"
+    y="438"
+    fill="#ffffff"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="64"
+    font-weight="800"
+    text-anchor="middle"
+  >EN</text>
+</svg>

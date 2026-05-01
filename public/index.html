@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="rgb(118, 185, 0)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Work English" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Work English Note</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="login-screen" id="loginScreen" hidden>
+      <form class="login-panel" id="loginForm">
+        <div class="brand-mark" aria-hidden="true">
+          <span>W</span>
+        </div>
+        <h1>Work English Note</h1>
+        <p>동기화된 노트에 접근하려면 비밀번호를 입력하세요.</p>
+        <label>
+          <span>비밀번호</span>
+          <input id="passwordInput" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="primary-button" type="submit">열기</button>
+        <p class="login-error" id="loginError" role="alert"></p>
+      </form>
+    </div>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="문장 노트 탐색">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span>W</span>
+          </div>
+          <div>
+            <strong>Work English</strong>
+            <span>Sentence Note</span>
+          </div>
+        </div>
+
+        <nav class="nav-stack" aria-label="필터">
+          <button class="nav-item active" type="button" data-filter="today">
+            <span class="nav-icon" data-icon="sun"></span>
+            오늘
+            <span class="nav-count" id="countToday">0</span>
+          </button>
+          <button class="nav-item" type="button" data-filter="week">
+            <span class="nav-icon" data-icon="calendar"></span>
+            이번 주
+            <span class="nav-count" id="countWeek">0</span>
+          </button>
+          <button class="nav-item" type="button" data-filter="due">
+            <span class="nav-icon" data-icon="target"></span>
+            복습 예정
+            <span class="nav-count" id="countDue">0</span>
+          </button>
+          <button class="nav-item" type="button" data-filter="favorites">
+            <span class="nav-icon" data-icon="star"></span>
+            즐겨찾기
+            <span class="nav-count" id="countFavorites">0</span>
+          </button>
+          <button class="nav-item" type="button" data-filter="archive">
+            <span class="nav-icon" data-icon="archive"></span>
+            전체 보관함
+            <span class="nav-count" id="countArchive">0</span>
+          </button>
+        </nav>
+
+        <section class="sidebar-section" aria-labelledby="statsTitle">
+          <h2 id="statsTitle">학습 흐름</h2>
+          <div class="meter-row">
+            <span>오늘 추가</span>
+            <strong id="statAddedToday">0</strong>
+          </div>
+          <div class="meter-row">
+            <span>복습 대기</span>
+            <strong id="statDue">0</strong>
+          </div>
+          <div class="meter-row">
+            <span>익숙함</span>
+            <strong id="statMastered">0</strong>
+          </div>
+        </section>
+
+        <section class="sidebar-section" aria-labelledby="tagsTitle">
+          <h2 id="tagsTitle">태그</h2>
+          <div class="tag-cloud" id="tagCloud"></div>
+        </section>
+
+        <div class="storage-note">
+          <span class="nav-icon" data-icon="database"></span>
+          <span id="storageText">로컬 저장 준비 중</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1>오늘의 업무 영어</h1>
+            <p id="statusLine">문장 노트를 불러오는 중입니다.</p>
+          </div>
+
+          <div class="top-actions">
+            <label class="search-box">
+              <span class="nav-icon" data-icon="search"></span>
+              <input id="searchInput" type="search" placeholder="문장, 단어, 태그 검색" autocomplete="off" />
+            </label>
+            <button class="ghost-button" id="exportButton" type="button">
+              <span class="nav-icon" data-icon="download"></span>
+              내보내기
+            </button>
+            <button class="ghost-button" id="installButton" type="button" hidden>
+              <span class="nav-icon" data-icon="download"></span>
+              앱 설치
+            </button>
+            <button class="ghost-button" id="logoutButton" type="button" hidden>
+              로그아웃
+            </button>
+          </div>
+        </header>
+
+        <section class="composer" aria-labelledby="composerTitle">
+          <div class="composer-head">
+            <div>
+              <h2 id="composerTitle">문장 추가</h2>
+              <p>붙여넣은 전체 내용을 하나의 학습 노트로 분석해 저장합니다.</p>
+            </div>
+            <div class="ai-state" id="aiState">
+              <span class="state-dot"></span>
+              분석 상태 확인 중
+            </div>
+          </div>
+
+          <form id="entryForm">
+            <textarea
+              id="sentenceInput"
+              rows="4"
+              placeholder="예: Could you share the updated timeline by end of day?\nLet's circle back once the review is complete."
+              required
+            ></textarea>
+
+            <div class="composer-grid">
+              <label>
+                <span>업무 맥락</span>
+                <input id="contextInput" type="text" placeholder="메일, 미팅, 리뷰 등" autocomplete="off" />
+              </label>
+              <label>
+                <span>태그</span>
+                <input id="tagInput" type="text" placeholder="project, meeting" autocomplete="off" />
+              </label>
+              <label>
+                <span>날짜</span>
+                <input id="sourceDateInput" type="date" />
+              </label>
+              <button class="primary-button" id="addButton" type="submit">
+                <span class="nav-icon" data-icon="plus"></span>
+                추가 및 분석
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="list-panel" aria-labelledby="listTitle">
+          <div class="list-head">
+            <div>
+              <h2 id="listTitle">저장된 문장</h2>
+              <p id="listSummary">0개 문장</p>
+            </div>
+            <div class="segmented-control" role="group" aria-label="정렬">
+              <button class="active" type="button" data-sort="recent">최신</button>
+              <button type="button" data-sort="due">복습일</button>
+              <button type="button" data-sort="hard">난이도</button>
+            </div>
+          </div>
+
+          <div class="entry-list" id="entryList"></div>
+        </section>
+      </main>
+
+      <aside class="inspector" aria-label="문장 분석">
+        <div id="inspectorContent" class="inspector-content"></div>
+      </aside>
+    </div>
+
+    <template id="emptyTemplate">
+      <div class="empty-state">
+        <div class="empty-mark" aria-hidden="true">
+          <span class="nav-icon" data-icon="notebook"></span>
+        </div>
+        <h2>아직 선택된 문장이 없습니다</h2>
+        <p>왼쪽 목록에서 문장을 고르면 번역, 단어, 구조, 발음 연습이 여기에 열립니다.</p>
+      </div>
+    </template>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

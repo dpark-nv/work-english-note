@@ -1,0 +1,32 @@
+{
+  "name": "Work English Note",
+  "short_name": "Work English",
+  "description": "업무 영어 문장을 저장하고 번역, 단어, 문장 구조, 발음, 복습까지 관리하는 영어 공부 노트",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "rgb(118, 185, 0)",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

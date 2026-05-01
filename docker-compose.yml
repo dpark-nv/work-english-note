@@ -1,0 +1,21 @@
+services:
+  work-english-note:
+    build: .
+    ports:
+      - "4177:4177"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4177
+      DATA_DIR: /app/data
+      OPENAI_MODEL: gpt-5.4-mini
+      # Put your key in a local .env file as OPENAI_API_KEY=...
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Optional: set APP_PASSWORD in .env before exposing this app publicly.
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      APP_SECRET: ${APP_SECRET:-}
+    volumes:
+      - work_english_note_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  work_english_note_data:

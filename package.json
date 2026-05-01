@@ -1,0 +1,13 @@
+{
+  "name": "work-english-note",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local work-English sentence notebook with translation, vocabulary, grammar analysis, review, and pronunciation.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
