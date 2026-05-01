@@ -106,6 +106,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
   letter-spacing: 0;
@@ -459,7 +460,8 @@ button:disabled {
 
 textarea,
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -479,6 +481,7 @@ textarea {
 
 textarea:focus,
 input:focus,
+select:focus,
 .search-box:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(118, 185, 0, 0.16);
@@ -502,11 +505,27 @@ input:focus,
   text-transform: uppercase;
 }
 
-.composer-grid input {
+.composer-grid input,
+.composer-grid select {
   height: 40px;
   padding: 0 11px;
   font-size: 13px;
   text-transform: none;
+}
+
+.composer-grid select {
+  appearance: none;
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 17px,
+    calc(100% - 13px) 17px;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
 }
 
 .primary-button {
