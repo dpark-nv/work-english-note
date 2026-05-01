@@ -1,5 +1,7 @@
 # Work English Note
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dpark-nv/work-english-note)
+
 업무 중 마주친 영어 문장을 붙여넣고, 번역/주요 단어/숙어/문장 구조/발음/복습 상태를 한곳에 쌓는 영어 공부 노트입니다.
 
 ## 이 PC에서 실행
